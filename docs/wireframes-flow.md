@@ -38,7 +38,23 @@ Each wireframe maps to a source file with `@` markers for quick lookup.
 │          ┌──────┴──────┐                             │
 │       Finish        Cancel                           │
 │          │             │                              │
-│  @WorkoutSummary   @HomeScreen                       │
+│   ┌──────┴──────┐  @HomeScreen                       │
+│   │ Incomplete   │                                   │
+│   │ sets exist?  │                                   │
+│   └──┬───────┬──┘                                    │
+│     NO      YES                                      │
+│      │       │                                        │
+│      │  @IncompleteWorkoutDialog                     │
+│      │    ┌──────┴──────────────┐                    │
+│      │  Complete   Skip     Go Back                  │
+│      │  All &     Incomplete    │                    │
+│      │  Finish       │      @ActiveWorkout           │
+│      │    │          │                                │
+│      │    │ (fill    │ (drop                          │
+│      │    │  prev)   │  unchecked)                    │
+│      ├────┴──────────┘                                │
+│      │                                                │
+│  @WorkoutSummary                                     │
 │          │                                            │
 │       Done                                           │
 │          │                                            │
@@ -430,4 +446,21 @@ Fixed bottom, above nav. Auto-dismisses after 5s.
 │  [  Cancel  ] [  Confirm  ]     │
 └─────────────────────────────────┘
 Slide-up modal with dark overlay.
+```
+
+#### @IncompleteWorkoutDialog — `src/components/IncompleteWorkoutDialog.jsx`
+```
+┌─────────────────────────────────┐
+│  UNFINISHED SETS                │
+│  You have N incomplete sets.    │
+│  What would you like to do?     │
+│                                 │
+│  [ Complete All & Finish ]      │  ← primary (accent), fills
+│                                 │     remaining with prev data
+│  [    Skip Incomplete    ]      │  ← secondary (bordered), saves
+│                                 │     only completed sets
+│        Go Back                  │  ← text-only, returns to workout
+└─────────────────────────────────┘
+Shown when tapping Finish with unchecked sets.
+Dark overlay, same slide-up style as ConfirmDialog.
 ```

@@ -24,6 +24,8 @@ npm run build      # Production build
 npm run preview    # Preview production build locally
 ```
 
+**Only one dev server at a time.** Before running `npm run dev` (or `vite preview`), check for and kill any existing Vite process for this project (e.g. `lsof -nP -iTCP -sTCP:LISTEN | grep node` filtered to this repo's `cwd`, or `pkill -f "Logger/node_modules/.bin/vite"`). Never launch a new one without first stopping prior instances — orphaned background dev servers pile up across sessions otherwise.
+
 ## Wireframes & Flow
 
 See `docs/wireframes-flow.md` for ASCII wireframes of every screen and the full navigation flow.
@@ -45,6 +47,7 @@ Use `@` markers to find screens/components quickly:
 - **@RestTimer** → `src/components/RestTimer.jsx` — Circular countdown, skip button
 - **@UndoToast** → `src/components/UndoToast.jsx` — 5s linear-depleting progress bar
 - **@ConfirmDialog** → `src/components/ConfirmDialog.jsx` — Slide-up confirmation modal
+- **@IncompleteWorkoutDialog** → `src/components/IncompleteWorkoutDialog.jsx` — 3-option dialog for finishing with unchecked sets
 
 ### Data & Utils
 - `src/data/exercises.js` — 90+ built-in exercises with muscle groups
@@ -102,7 +105,7 @@ Design language: Zero border radius. ALL CAPS for nav/labels. Massive display ty
 Tap targets: minimum 44×44px. Bottom nav: 56px + safe area.
 
 ## Model Routing
-- **Gemini**: reading any file over 400 lines. Do not store context from these reads — extract what you need and move on.
+- **Gemini 3.5 Flash medium effort** (Via antigravity CLI. use agy to access it): reading any file over 400 lines. Do not store context from these reads — extract what you need and move on.
 - **Haiku 4.5**: file reads under 400 lines, surgical one-liner edits, doc updates (PROGRESS.md, CHANGELOG.md, wireframes, SCHEMA_REFERENCE.md, etc.).
 - **Sonnet / Opus 4.6**: reasoning, coding, architecture decisions, multi-file changes, anything that requires understanding tradeoffs or writing non-trivial logic.
 
@@ -146,6 +149,7 @@ Transform vague tasks into verifiable goals. "Add the rest timer" → "timer sta
 - **Undo toasts:** @UndoToast — 5-second linear-depleting progress bar. Appears on: set delete, exercise replace.
 - **Notes lifecycle:** Regular notes appear on the *next* workout only, then archive to history. Sticky notes persist forever.
 - **PR detection:** @WorkoutSummary tracks new max weight or max reps per exercise across all workouts.
+- **Incomplete sets on finish:** Tapping Finish with unchecked sets shows @IncompleteWorkoutDialog with three options: "Complete All & Finish" (fills remaining with previous data), "Skip Incomplete" (drops unchecked sets), or "Go Back". If all sets are checked, shows the standard @ConfirmDialog.
 
 ## Out of Scope (v1)
 
