@@ -4,6 +4,7 @@ import { recoverLostWorkouts } from '../data/historyDb.js';
 import { AppContext } from '../App.jsx';
 import StrongImport from '../components/StrongImport.jsx';
 import AuthModal from '../components/AuthModal.jsx';
+import LegalModal from '../components/LegalModal.jsx';
 import { supabase } from '../data/supabase.js';
 
 export default function SettingsScreen() {
@@ -16,6 +17,7 @@ export default function SettingsScreen() {
   const [recoverResult, setRecoverResult] = useState(null);
   const [feedbackText, setFeedbackText] = useState('');
   const [feedbackStatus, setFeedbackStatus] = useState(null);
+  const [legalDoc, setLegalDoc] = useState(null);
   const ctx = useContext(AppContext);
   const { user, syncing } = ctx;
 
@@ -372,8 +374,27 @@ export default function SettingsScreen() {
         textTransform: 'uppercase',
         letterSpacing: '0.1em',
       }}>
+        <div style={{ marginBottom: 12, lineHeight: 1.6, textTransform: 'none', letterSpacing: 'normal', fontSize: 12 }}>
+          By using this app you agree to these{' '}
+          <span
+            onClick={() => setLegalDoc('terms')}
+            style={{ color: 'var(--text-secondary)', textDecoration: 'underline', cursor: 'pointer' }}
+          >
+            Terms of Service
+          </span>
+          {' '}and this{' '}
+          <span
+            onClick={() => setLegalDoc('privacy')}
+            style={{ color: 'var(--text-secondary)', textDecoration: 'underline', cursor: 'pointer' }}
+          >
+            Privacy Policy
+          </span>
+          .
+        </div>
         Workout Logger v1.0
       </div>
+
+      {legalDoc && <LegalModal doc={legalDoc} onClose={() => setLegalDoc(null)} />}
 
       {showStrongImport && (
         <StrongImport

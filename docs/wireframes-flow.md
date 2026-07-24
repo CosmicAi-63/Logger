@@ -419,10 +419,16 @@ Read-only. Notes (regular + sticky) shown in yellow boxes if present.
 │  │ FEEDBACK SENT           │    │  ← green confirm / red error
 │  └─────────────────────────┘    │
 │                                 │
+│  By using this app you agree    │
+│  to these Terms of Service      │  ← underlined links open
+│  and this Privacy Policy.       │     @LegalModal
 │     Workout Logger v1.0         │
 └─────────────────────────────────┘
 ```
 Feedback submissions write to the `feedback` table (insert-only RLS); read them in the Supabase dashboard.
+
+#### @LegalModal — `src/components/LegalModal.jsx`
+Slide-up modal (same shell as @ConfirmDialog) rendering Terms of Service or Privacy Policy from `src/data/legal.js` (`doc` prop: 'terms' | 'privacy'). Scrollable body, "Last updated" date under title. Opened from the Settings footer links and from the sign-in modal, where a required "I agree to the Terms of Service and Privacy Policy" checkbox gates the Google sign-in button (AuthModal).
 
 ---
 

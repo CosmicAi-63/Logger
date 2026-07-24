@@ -1,8 +1,14 @@
+import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { supabase } from '../data/supabase.js';
+import LegalModal from './LegalModal.jsx';
 
 export default function AuthModal({ onClose }) {
+  const [agreed, setAgreed] = useState(false);
+  const [legalDoc, setLegalDoc] = useState(null);
+
   async function signInWithGoogle() {
+    if (!agreed) return;
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -30,8 +36,39 @@ export default function AuthModal({ onClose }) {
         <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20, lineHeight: 1.5 }}>
           Sign in with Google to sync your workouts across devices. No password needed.
         </p>
+        <label style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: 10,
+          marginBottom: 16,
+          cursor: 'pointer',
+        }}>
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={e => setAgreed(e.target.checked)}
+            style={{ width: 18, height: 18, marginTop: 1, flexShrink: 0, accentColor: 'var(--accent)' }}
+          />
+          <span style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+            I agree to the{' '}
+            <span
+              onClick={e => { e.preventDefault(); setLegalDoc('terms'); }}
+              style={{ color: 'var(--text)', textDecoration: 'underline' }}
+            >
+              Terms of Service
+            </span>
+            {' '}and{' '}
+            <span
+              onClick={e => { e.preventDefault(); setLegalDoc('privacy'); }}
+              style={{ color: 'var(--text)', textDecoration: 'underline' }}
+            >
+              Privacy Policy
+            </span>
+          </span>
+        </label>
         <button
           onClick={signInWithGoogle}
+          disabled={!agreed}
           style={{
             width: '100%',
             height: 52,
@@ -39,17 +76,19 @@ export default function AuthModal({ onClose }) {
             alignItems: 'center',
             justifyContent: 'center',
             gap: 12,
-            background: '#fff',
-            color: '#1a1a1a',
-            border: 'none',
+            background: agreed ? '#fff' : 'var(--surface)',
+            color: agreed ? '#1a1a1a' : 'var(--text-muted)',
+            border: agreed ? 'none' : '1px solid var(--border)',
             fontSize: 15,
             fontWeight: 700,
-            cursor: 'pointer',
+            cursor: agreed ? 'pointer' : 'default',
           }}
         >
           <GoogleIcon />
           Sign in with Google
         </button>
+
+        {legalDoc && <LegalModal doc={legalDoc} onClose={() => setLegalDoc(null)} />}
 
         <button
           onClick={onClose}
