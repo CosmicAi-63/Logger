@@ -14,6 +14,8 @@ export default function SettingsScreen() {
   const [showInstructions, setShowInstructions] = useState(null);
   const [recovering, setRecovering] = useState(false);
   const [recoverResult, setRecoverResult] = useState(null);
+  const [feedbackText, setFeedbackText] = useState('');
+  const [feedbackStatus, setFeedbackStatus] = useState(null);
   const ctx = useContext(AppContext);
   const { user, syncing } = ctx;
 
@@ -300,8 +302,38 @@ export default function SettingsScreen() {
         marginBottom: 24,
       }}>
         <div className="label" style={{ marginBottom: 14 }}>Feedback</div>
-        <a
-          href="mailto:sorenhagen14@gmail.com?subject=Logger%20Feedback"
+        <textarea
+          value={feedbackText}
+          onChange={(e) => { setFeedbackText(e.target.value); setFeedbackStatus(null); }}
+          placeholder="Report a bug or request a feature…"
+          maxLength={1000}
+          rows={4}
+          style={{
+            display: 'block',
+            width: '100%',
+            padding: '14px',
+            fontSize: 14,
+            background: 'var(--surface)',
+            color: 'var(--text)',
+            border: '1px solid var(--border)',
+            resize: 'vertical',
+            marginBottom: 10,
+          }}
+        />
+        <button
+          onClick={async () => {
+            const message = feedbackText.trim();
+            if (!message || feedbackStatus === 'sending') return;
+            setFeedbackStatus('sending');
+            const { error } = await supabase.from('feedback').insert({ message });
+            if (error) {
+              setFeedbackStatus('error');
+            } else {
+              setFeedbackStatus('sent');
+              setFeedbackText('');
+            }
+          }}
+          disabled={!feedbackText.trim() || feedbackStatus === 'sending'}
           style={{
             display: 'block',
             width: '100%',
@@ -311,14 +343,25 @@ export default function SettingsScreen() {
             textTransform: 'uppercase',
             letterSpacing: '0.06em',
             background: 'transparent',
-            color: 'var(--text)',
+            color: feedbackText.trim() ? 'var(--text)' : 'var(--text-muted)',
             border: '1px solid var(--border)',
             textAlign: 'center',
-            textDecoration: 'none',
           }}
         >
-          Report Bug / Request Feature
-        </a>
+          {feedbackStatus === 'sending' ? 'Sending…' : 'Send Feedback'}
+        </button>
+        {(feedbackStatus === 'sent' || feedbackStatus === 'error') && (
+          <div style={{
+            fontSize: 12,
+            color: feedbackStatus === 'sent' ? 'var(--green)' : 'var(--red)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            textAlign: 'center',
+            marginTop: 8,
+          }}>
+            {feedbackStatus === 'sent' ? 'Feedback sent' : 'Could not send — try again'}
+          </div>
+        )}
       </div>
 
       <div style={{

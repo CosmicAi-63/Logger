@@ -409,9 +409,20 @@ Read-only. Notes (regular + sticky) shown in yellow boxes if present.
 │  │ [Import Backup]         │    │
 │  └─────────────────────────┘    │
 │                                 │
+│  ┌─────────────────────────┐    │
+│  │ FEEDBACK                │    │
+│  │ ┌─────────────────────┐ │    │
+│  │ │ Report a bug or     │ │    │  ← textarea, max 1000 chars
+│  │ │ request a feature…  │ │    │
+│  │ └─────────────────────┘ │    │
+│  │ [   SEND FEEDBACK   ]   │    │  ← inserts into Supabase
+│  │ FEEDBACK SENT           │    │  ← green confirm / red error
+│  └─────────────────────────┘    │
+│                                 │
 │     Workout Logger v1.0         │
 └─────────────────────────────────┘
 ```
+Feedback submissions write to the `feedback` table (insert-only RLS); read them in the Supabase dashboard.
 
 ---
 
