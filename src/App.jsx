@@ -44,6 +44,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [syncing, setSyncing] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [workoutMinimized, setWorkoutMinimized] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -142,6 +143,7 @@ export default function App() {
     };
     setActiveWorkout(workout);
     saveActiveWorkout(workout);
+    setWorkoutMinimized(false);
   }, []);
 
   const startWorkout = useCallback((template) => {
@@ -182,6 +184,7 @@ export default function App() {
     };
     setActiveWorkout(workout);
     saveActiveWorkout(workout);
+    setWorkoutMinimized(false);
   }, []);
 
   const finishWorkout = useCallback((workoutOverride) => {
@@ -219,11 +222,13 @@ export default function App() {
     clearActiveWorkout();
     setCompletedWorkout(completed);
     setActiveWorkout(null);
+    setWorkoutMinimized(false);
   }, [activeWorkout]);
 
   const cancelWorkout = useCallback(() => {
     clearActiveWorkout();
     setActiveWorkout(null);
+    setWorkoutMinimized(false);
   }, []);
 
   const ctx = {
@@ -235,6 +240,8 @@ export default function App() {
     startQuickWorkout,
     finishWorkout,
     cancelWorkout,
+    workoutMinimized,
+    setWorkoutMinimized,
     editingTemplate,
     setEditingTemplate,
     viewingWorkout,
@@ -260,8 +267,8 @@ export default function App() {
     );
   }
 
-  // 2. Active workout (no nav)
-  if (activeWorkout) {
+  // 2. Active workout (no nav) — unless minimized
+  if (activeWorkout && !workoutMinimized) {
     return (
       <AppContext.Provider value={ctx}>
           <ActiveWorkout />
@@ -329,6 +336,33 @@ export default function App() {
   return (
     <AppContext.Provider value={ctx}>
       <PullToRefresh>
+        {activeWorkout && workoutMinimized && (
+          <button
+            onClick={() => setWorkoutMinimized(false)}
+            style={{
+              position: 'sticky',
+              top: 0,
+              zIndex: 50,
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              padding: '14px 16px',
+              paddingTop: 'calc(env(safe-area-inset-top, 0px) + 14px)',
+              background: 'var(--accent)',
+              color: 'var(--accent-text)',
+              fontSize: 13,
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              borderBottom: '1px solid rgba(255,255,255,0.15)',
+            }}
+          >
+            <span style={{ fontSize: 16 }}>↑</span>
+            {activeWorkout.templateName || 'Workout'} in progress — tap to resume
+          </button>
+        )}
         {!user && !bannerDismissed && (
           <SignInBanner onDismiss={() => setBannerDismissed(true)} />
         )}

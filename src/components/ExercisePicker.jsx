@@ -1,19 +1,39 @@
 import { useState, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { getExercises } from '../data/db.js';
+import { getExercises, saveCustomExercise } from '../data/db.js';
 import { MUSCLE_GROUPS } from '../data/exercises.js';
+import { generateId } from '../utils/helpers.js';
 import MuscleMap from './MuscleMap.jsx';
 
 export default function ExercisePicker({ onSelect, onClose, excludeIds = [] }) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState(null);
   const [addedIds, setAddedIds] = useState([]);
-  const exercises = useMemo(() => getExercises(), []);
+  const [exercises, setExercises] = useState(() => getExercises());
+  const [showCreate, setShowCreate] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newMuscleGroup, setNewMuscleGroup] = useState(MUSCLE_GROUPS[0]);
 
   const handleSelect = useCallback((ex) => {
     onSelect(ex);
     setAddedIds(prev => [...prev, ex.id]);
   }, [onSelect]);
+
+  const handleCreateExercise = useCallback(() => {
+    const trimmed = newName.trim();
+    if (!trimmed) return;
+    const exercise = {
+      id: `custom-${generateId()}`,
+      name: trimmed,
+      muscleGroup: newMuscleGroup,
+      isBuiltIn: false,
+    };
+    saveCustomExercise(exercise);
+    setExercises(getExercises());
+    setShowCreate(false);
+    setNewName('');
+    handleSelect(exercise);
+  }, [newName, newMuscleGroup, handleSelect]);
 
   const filtered = useMemo(() => {
     return exercises.filter(ex => {
@@ -154,6 +174,121 @@ export default function ExercisePicker({ onSelect, onClose, excludeIds = [] }) {
             </button>
           ))}
         </div>
+
+        {showCreate ? (
+          <div style={{
+            padding: '16px 0',
+            borderBottom: '1px solid var(--border)',
+            flexShrink: 0,
+          }}>
+            <div style={{
+              fontSize: 12,
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              marginBottom: 12,
+              color: 'var(--text-secondary)',
+            }}>
+              New Custom Exercise
+            </div>
+            <input
+              className="input-field"
+              type="text"
+              placeholder="Exercise name"
+              value={newName}
+              onChange={e => setNewName(e.target.value)}
+              autoFocus
+              style={{ marginBottom: 12 }}
+            />
+            <div style={{
+              display: 'flex',
+              gap: 6,
+              flexWrap: 'wrap',
+              marginBottom: 16,
+            }}>
+              {MUSCLE_GROUPS.map(mg => (
+                <button
+                  key={mg}
+                  onClick={() => setNewMuscleGroup(mg)}
+                  style={{
+                    padding: '5px 12px',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    background: newMuscleGroup === mg ? 'var(--accent)' : 'transparent',
+                    color: newMuscleGroup === mg ? 'var(--accent-text)' : 'var(--text-muted)',
+                    border: `1px solid ${newMuscleGroup === mg ? 'var(--accent)' : 'var(--border)'}`,
+                  }}
+                >
+                  {mg}
+                </button>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => { setShowCreate(false); setNewName(''); }}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  background: 'transparent',
+                  color: 'var(--text-muted)',
+                  border: '1px solid var(--border)',
+                  minHeight: 44,
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateExercise}
+                disabled={!newName.trim()}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  fontSize: 12,
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                  background: newName.trim() ? 'var(--accent)' : 'var(--surface-hover)',
+                  color: newName.trim() ? 'var(--accent-text)' : 'var(--text-muted)',
+                  border: 'none',
+                  minHeight: 44,
+                }}
+              >
+                Add Exercise
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowCreate(true)}
+            style={{
+              width: '100%',
+              padding: '12px 0',
+              fontSize: 13,
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              background: 'none',
+              color: 'var(--accent)',
+              border: 'none',
+              borderBottom: '1px solid var(--border)',
+              textAlign: 'left',
+              flexShrink: 0,
+              minHeight: 44,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <span style={{ fontSize: 18, lineHeight: 1 }}>+</span>
+            Create Custom Exercise
+          </button>
+        )}
 
         <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
           {Object.keys(grouped).length === 0 && (
