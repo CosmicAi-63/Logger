@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext, useState, useRef } from 'react';
 import { AppContext } from '../App.jsx';
 
 const tabs = [
@@ -35,53 +35,108 @@ const tabs = [
 ];
 
 export default function BottomNav() {
-  const { screen, setScreen, activeWorkout } = useContext(AppContext);
+  const { screen, setScreen, activeWorkout, workoutMinimized, setWorkoutMinimized } = useContext(AppContext);
+  const [dragY, setDragY] = useState(0);
+  const startY = useRef(0);
+  const dragging = useRef(false);
 
-  if (activeWorkout) return null;
+  if (activeWorkout && !workoutMinimized) return null;
+
+  const handleTouchStart = (e) => {
+    startY.current = e.touches[0].clientY;
+    dragging.current = true;
+    setDragY(0);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!dragging.current) return;
+    const diff = startY.current - e.touches[0].clientY;
+    setDragY(Math.max(0, diff));
+  };
+
+  const handleTouchEnd = () => {
+    if (dragY > 60) {
+      setWorkoutMinimized(false);
+    }
+    setDragY(0);
+    dragging.current = false;
+  };
 
   return (
-    <nav style={{
-      position: 'fixed',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      height: `calc(var(--nav-height) + var(--safe-bottom))`,
-      paddingBottom: 'var(--safe-bottom)',
-      background: 'var(--bg)',
-      borderTop: '1px solid var(--border)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-around',
-      zIndex: 50,
-    }}>
-      {tabs.map(tab => {
-        const active = screen === tab.id;
-        return (
-          <button
-            key={tab.id}
-            onClick={() => setScreen(tab.id)}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '3px',
-              padding: '6px 16px',
-              color: active ? 'var(--accent)' : 'var(--text-muted)',
-              background: 'none',
-              border: 'none',
-              fontSize: '10px',
-              fontWeight: 600,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              transition: 'color 0.15s',
-              minWidth: '64px',
-            }}
-          >
-            {tab.icon}
-            <span>{tab.label}</span>
-          </button>
-        );
-      })}
-    </nav>
+    <>
+      {activeWorkout && workoutMinimized && (
+        <div
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onClick={() => setWorkoutMinimized(false)}
+          style={{
+            position: 'fixed',
+            bottom: `calc(var(--nav-height) + var(--safe-bottom))`,
+            left: 0,
+            right: 0,
+            zIndex: 50,
+            background: 'var(--surface)',
+            borderTop: '1px solid var(--border)',
+            padding: '8px 0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transform: `translateY(-${dragY}px)`,
+            transition: dragging.current ? 'none' : 'transform 0.2s',
+          }}
+        >
+          <div style={{
+            width: 36,
+            height: 5,
+            borderRadius: 3,
+            background: 'var(--text-muted)',
+          }} />
+        </div>
+      )}
+      <nav style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: `calc(var(--nav-height) + var(--safe-bottom))`,
+        paddingBottom: 'var(--safe-bottom)',
+        background: 'var(--bg)',
+        borderTop: '1px solid var(--border)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-around',
+        zIndex: 50,
+      }}>
+        {tabs.map(tab => {
+          const active = screen === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setScreen(tab.id)}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '3px',
+                padding: '6px 16px',
+                color: active ? 'var(--accent)' : 'var(--text-muted)',
+                background: 'none',
+                border: 'none',
+                fontSize: '10px',
+                fontWeight: 600,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                transition: 'color 0.15s',
+                minWidth: '64px',
+              }}
+            >
+              {tab.icon}
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+    </>
   );
 }

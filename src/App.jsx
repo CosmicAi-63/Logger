@@ -336,33 +336,6 @@ export default function App() {
   return (
     <AppContext.Provider value={ctx}>
       <PullToRefresh>
-        {activeWorkout && workoutMinimized && (
-          <button
-            onClick={() => setWorkoutMinimized(false)}
-            style={{
-              position: 'sticky',
-              top: 0,
-              zIndex: 50,
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              padding: '14px 16px',
-              paddingTop: 'calc(env(safe-area-inset-top, 0px) + 14px)',
-              background: 'var(--accent)',
-              color: 'var(--accent-text)',
-              fontSize: 13,
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              borderBottom: '1px solid rgba(255,255,255,0.15)',
-            }}
-          >
-            <span style={{ fontSize: 16 }}>↑</span>
-            {activeWorkout.templateName || 'Workout'} in progress — tap to resume
-          </button>
-        )}
         {!user && !bannerDismissed && (
           <SignInBanner onDismiss={() => setBannerDismissed(true)} />
         )}
