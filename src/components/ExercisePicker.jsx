@@ -69,6 +69,7 @@ export default function ExercisePicker({ onSelect, onClose, excludeIds = [] }) {
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
+          paddingTop: 'env(safe-area-inset-top, 0px)',
           paddingBottom: 'var(--safe-bottom)',
         }}
       >
