@@ -121,10 +121,16 @@ export default function ExercisePicker({ onSelect, onClose, excludeIds = [] }) {
 
         <input
           className="input-field"
-          type="text"
+          type="search"
+          inputMode="search"
+          enterKeyHint="search"
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
           placeholder="Search exercises..."
           value={search}
           onChange={e => setSearch(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); }}
           autoFocus
           style={{ marginBottom: 12, flexShrink: 0 }}
         />
@@ -195,9 +201,14 @@ export default function ExercisePicker({ onSelect, onClose, excludeIds = [] }) {
             <input
               className="input-field"
               type="text"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint="done"
               placeholder="Exercise name"
               value={newName}
               onChange={e => setNewName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && newName.trim()) handleCreateExercise(); }}
               autoFocus
               style={{ marginBottom: 12 }}
             />

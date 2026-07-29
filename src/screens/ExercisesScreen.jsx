@@ -100,10 +100,16 @@ export default function ExercisesScreen() {
 
       <input
         className="input-field"
-        type="text"
+        type="search"
+        inputMode="search"
+        enterKeyHint="search"
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
         placeholder="Search exercises..."
         value={search}
         onChange={e => setSearch(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); }}
         style={{ marginBottom: 12 }}
       />
 

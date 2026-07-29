@@ -151,9 +151,13 @@ export default function TemplateEditor({ template, onSave, onDelete, onCancel })
         </button>
         <input
           type="text"
+          autoComplete="off"
+          autoCorrect="off"
+          enterKeyHint="done"
           placeholder="TEMPLATE NAME"
           value={name}
           onChange={e => setName(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); }}
           style={{
             flex: 1,
             fontSize: 14,
