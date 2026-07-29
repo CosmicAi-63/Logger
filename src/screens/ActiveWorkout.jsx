@@ -12,7 +12,7 @@ import NumericInputModal from '../components/NumericInputModal.jsx';
 import ExerciseHistory from '../components/ExerciseHistory.jsx';
 
 export default function ActiveWorkout() {
-  const { activeWorkout, setActiveWorkout, finishWorkout, cancelWorkout } = useContext(AppContext);
+  const { activeWorkout, setActiveWorkout, finishWorkout, cancelWorkout, setWorkoutMinimized } = useContext(AppContext);
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
   const [showIncompleteDialog, setShowIncompleteDialog] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -322,7 +322,6 @@ export default function ActiveWorkout() {
     <div
       onClick={() => { if (numericTarget) { setNumericTarget(null); setNumpadOpen(false); } }}
       style={{
-        paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingBottom: numpadOpen ? 300 : 24,
         minHeight: '100dvh',
       }}
@@ -334,12 +333,31 @@ export default function ActiveWorkout() {
         zIndex: 30,
         background: 'var(--bg)',
         borderBottom: '1px solid var(--border)',
-        padding: '12px 16px',
-        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
       }}>
+        <button
+          onClick={() => setWorkoutMinimized(true)}
+          style={{
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: '8px 0 0',
+            paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)',
+          }}
+        >
+          <div style={{
+            width: 36,
+            height: 5,
+            borderRadius: 3,
+            background: 'var(--text-muted)',
+          }} />
+        </button>
+        <div style={{
+          padding: '8px 16px 12px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}>
         <div style={{
           fontSize: 14,
           fontWeight: 700,
@@ -366,6 +384,7 @@ export default function ActiveWorkout() {
         >
           Finish
         </button>
+        </div>
       </div>
 
       {/* Exercise Cards */}

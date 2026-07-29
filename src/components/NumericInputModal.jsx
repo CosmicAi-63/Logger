@@ -29,20 +29,19 @@ export default function NumericInputModal({ value, allowDecimal, placeholder, on
   };
 
   const rows = [
-    ['7', '8', '9'],
-    ['4', '5', '6'],
     ['1', '2', '3'],
+    ['4', '5', '6'],
+    ['7', '8', '9'],
     [allowDecimal ? '.' : null, '0', 'back'],
   ];
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, zIndex: 200, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', pointerEvents: 'none' }}
+      style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 200 }}
     >
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          pointerEvents: 'auto',
           background: 'var(--bg)',
           borderTop: '1px solid var(--border)',
           animation: 'slideUp 0.22s ease-out',
