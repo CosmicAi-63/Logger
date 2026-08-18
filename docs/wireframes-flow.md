@@ -194,6 +194,8 @@ red delete action. Minimum 1 set per exercise is enforced.
 
 Move mode shows a compact, name-only exercise list. Enter it by long-pressing an exercise name or choosing **Move Exercise** as the first item under the exercise menu's Actions section. Reorder by dragging a name or by tapping the destination for the selected exercise, then tap **Done**.
 
+The sticky active-workout header always reserves the device's top safe area, including in move mode, so its title and actions never overlap the iPhone status indicators.
+
 ---
 
 ### Set Type Popover (within @ActiveWorkout)

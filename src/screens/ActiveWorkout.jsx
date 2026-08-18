@@ -437,7 +437,7 @@ export default function ActiveWorkout() {
       }}
     >
       {/* Header */}
-      <div style={{
+      <div className="safe-area-top" style={{
         position: 'sticky',
         top: 0,
         zIndex: 30,
@@ -452,7 +452,6 @@ export default function ActiveWorkout() {
             flexDirection: 'column',
             alignItems: 'center',
             padding: '8px 0 0',
-            paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)',
           }}
         >
           <div style={{
