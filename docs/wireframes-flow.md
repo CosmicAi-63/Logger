@@ -190,7 +190,9 @@ red delete action. Minimum 1 set per exercise is enforced.
 
 **Checkbox rule:** Only renders when `weight !== ''` OR `reps !== ''` OR `set.completed`. Otherwise the space is blank.
 
-**Exercise reordering:** Long-press an exercise name, then drag it to any position. Cards keep their full height while dragging, and the workout auto-scrolls near the top or bottom edge so off-screen positions remain reachable. Text selection and the iOS long-press callout are disabled throughout an active workout so they cannot intercept the drag gesture.
+**Exercise reordering:** Long-press an exercise name to enter compact move mode, then drag it to any position. The workout auto-scrolls near the top or bottom edge when needed. Text selection and the iOS long-press callout are disabled throughout an active workout so they cannot intercept the drag gesture.
+
+Move mode shows a compact, name-only exercise list. Enter it by long-pressing an exercise name or choosing **Move Exercise** as the first item under the exercise menu's Actions section. Reorder by dragging a name or by tapping the destination for the selected exercise, then tap **Done**.
 
 ---
 

@@ -14,7 +14,7 @@ const BAR_TYPES = [
   { value: 'heavy_75', label: 'Heavy Bar (75 lb)' },
 ];
 
-export default function ExerciseMenu({ exercise, exerciseIdx, settings, onClose, onUpdateExercise, onReplace, onRemove, onCreateSuperset }) {
+export default function ExerciseMenu({ exercise, settings, onClose, onMove, onUpdateExercise, onReplace, onRemove, onCreateSuperset }) {
   const { activeWorkout } = useContext(AppContext);
   const [subMenu, setSubMenu] = useState(null);
   const [noteText, setNoteText] = useState('');
@@ -37,15 +37,9 @@ export default function ExerciseMenu({ exercise, exerciseIdx, settings, onClose,
 
   const menuItems = [
     {
-      group: 'Notes',
-      items: [
-        { label: 'Add Note', icon: '✎', action: () => { setNoteType('regular'); setSubMenu('note'); } },
-        { label: 'Add Sticky Note', icon: '◈', action: () => { setNoteType('sticky'); setSubMenu('note'); } },
-      ],
-    },
-    {
       group: 'Actions',
       items: [
+        { label: 'Move Exercise', icon: '↕', action: onMove },
         { label: 'Replace Exercise', icon: '↻', action: () => {
           if (loggedSets > 0) {
             setShowReplaceConfirm(true);
@@ -55,6 +49,13 @@ export default function ExerciseMenu({ exercise, exerciseIdx, settings, onClose,
         }},
         { label: 'Create Superset', icon: '↔', action: () => setSubMenu('superset') },
         { label: 'Remove Exercise', icon: '✕', color: 'var(--red)', action: () => setShowRemoveConfirm(true) },
+      ],
+    },
+    {
+      group: 'Notes',
+      items: [
+        { label: 'Add Note', icon: '✎', action: () => { setNoteType('regular'); setSubMenu('note'); } },
+        { label: 'Add Sticky Note', icon: '◈', action: () => { setNoteType('sticky'); setSubMenu('note'); } },
       ],
     },
     {

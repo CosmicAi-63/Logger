@@ -29,6 +29,8 @@ export default function ActiveWorkout() {
   const [dragIdx, setDragIdx] = useState(null);
   const [dragOverIdx, setDragOverIdx] = useState(null);
   const [dragActivating, setDragActivating] = useState(null);
+  const [moveMode, setMoveMode] = useState(false);
+  const [moveSelectionIdx, setMoveSelectionIdx] = useState(null);
   const [historyExercise, setHistoryExercise] = useState(null);
   const dragRefs = useRef([]);
   const longPressTimer = useRef(null);
@@ -38,6 +40,7 @@ export default function ActiveWorkout() {
   const dragOverIdxRef = useRef(null);
   const dragTouchY = useRef(null);
   const autoScrollFrame = useRef(null);
+  const suppressMoveClickUntil = useRef(0);
 
   const settings = getSettings();
   const allExercises = getExercises();
@@ -263,12 +266,17 @@ export default function ActiveWorkout() {
       isDragging.current = true;
       dragIdxRef.current = exIdx;
       dragOverIdxRef.current = exIdx;
+      setMoveMode(true);
+      setMoveSelectionIdx(exIdx);
       setDragActivating(null);
       setDragIdx(exIdx);
       setDragOverIdx(exIdx);
       setNumericTarget(null);
       setNumpadOpen(false);
       if (navigator.vibrate) navigator.vibrate(20);
+      requestAnimationFrame(() => {
+        dragRefs.current[exIdx]?.scrollIntoView({ block: 'center' });
+      });
     }, 400);
   }, []);
 
@@ -348,6 +356,7 @@ export default function ActiveWorkout() {
       setActiveWorkout(prev => {
         return { ...prev, exercises: moveItem(prev.exercises, fromIdx, toIdx) };
       });
+      setMoveSelectionIdx(toIdx);
     }
     if (!wasDragging && hadTimer && exIdx !== undefined) {
       const ex = workout?.exercises[exIdx];
@@ -357,6 +366,9 @@ export default function ActiveWorkout() {
       }
     }
     isDragging.current = false;
+    if (wasDragging) {
+      suppressMoveClickUntil.current = Date.now() + 500;
+    }
     dragIdxRef.current = null;
     dragOverIdxRef.current = null;
     dragTouchY.current = null;
@@ -371,6 +383,42 @@ export default function ActiveWorkout() {
   const handleTouchCancel = useCallback(() => {
     finishDrag(undefined, false);
   }, [finishDrag]);
+
+  const openMoveMode = useCallback((exerciseIdx) => {
+    setMenuExerciseIdx(null);
+    setMoveSelectionIdx(exerciseIdx);
+    setMoveMode(true);
+  }, []);
+
+  const closeMoveMode = useCallback(() => {
+    setMoveMode(false);
+    setMoveSelectionIdx(null);
+    setDragActivating(null);
+  }, []);
+
+  const handleMoveRowClick = useCallback((toIdx) => {
+    if (Date.now() < suppressMoveClickUntil.current) return;
+    if (moveSelectionIdx === null) {
+      setMoveSelectionIdx(toIdx);
+      return;
+    }
+    if (moveSelectionIdx === toIdx) return;
+
+    setActiveWorkout(prev => ({
+      ...prev,
+      exercises: moveItem(prev.exercises, moveSelectionIdx, toIdx),
+    }));
+    setMoveSelectionIdx(toIdx);
+    if (navigator.vibrate) navigator.vibrate(10);
+  }, [moveSelectionIdx, setActiveWorkout]);
+
+  useEffect(() => {
+    if (!moveMode || moveSelectionIdx === null || isDragging.current) return;
+    const frame = requestAnimationFrame(() => {
+      dragRefs.current[moveSelectionIdx]?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [moveMode, moveSelectionIdx]);
 
   useEffect(() => () => {
     if (longPressTimer.current) clearTimeout(longPressTimer.current);
@@ -396,7 +444,7 @@ export default function ActiveWorkout() {
         background: 'var(--bg)',
         borderBottom: '1px solid var(--border)',
       }}>
-        <button
+        {!moveMode && <button
           onClick={() => setWorkoutMinimized(true)}
           style={{
             width: '100%',
@@ -413,7 +461,7 @@ export default function ActiveWorkout() {
             borderRadius: 3,
             background: 'var(--text-muted)',
           }} />
-        </button>
+        </button>}
         <div style={{
           padding: '8px 16px 12px',
           display: 'flex',
@@ -426,10 +474,14 @@ export default function ActiveWorkout() {
           textTransform: 'uppercase',
           letterSpacing: '0.08em',
         }}>
-          {workout.templateName || 'Workout'}
+          {moveMode ? 'Move Exercise' : (workout.templateName || 'Workout')}
         </div>
         <button
           onClick={() => {
+            if (moveMode) {
+              closeMoveMode();
+              return;
+            }
             const hasIncomplete = workout.exercises.some(ex => ex.sets.some(s => !s.completed));
             if (hasIncomplete) setShowIncompleteDialog(true);
             else setShowFinishConfirm(true);
@@ -444,13 +496,13 @@ export default function ActiveWorkout() {
             letterSpacing: '0.08em',
           }}
         >
-          Finish
+          {moveMode ? 'Done' : 'Finish'}
         </button>
         </div>
       </div>
 
       {/* Exercise Cards */}
-      <div style={{ padding: '16px 16px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={{ padding: '16px 16px', display: 'flex', flexDirection: 'column', gap: moveMode ? 0 : 24 }}>
         {workout.exercises.map((ex, exIdx) => {
           const prevData = getPreviousDataForExercise(ex.exerciseId);
           const isSupersetMember = workout.supersets?.some(ss => ss.exerciseIds.includes(ex.exerciseId));
@@ -471,7 +523,7 @@ export default function ActiveWorkout() {
                 paddingBottom: dragOverIdx === exIdx && dragIdx !== null && dragIdx < exIdx ? 8 : undefined,
               }}
             >
-              {isSupersetMember && isFirstInSuperset && (
+              {!moveMode && isSupersetMember && isFirstInSuperset && (
                 <div style={{
                   fontSize: 10,
                   fontWeight: 700,
@@ -484,15 +536,17 @@ export default function ActiveWorkout() {
                 </div>
               )}
               <div style={{
-                borderLeft: isSupersetMember ? '2px solid var(--text-secondary)' : undefined,
-                paddingLeft: isSupersetMember ? 12 : 0,
+                borderLeft: !moveMode && isSupersetMember ? '2px solid var(--text-secondary)' : undefined,
+                borderBottom: moveMode ? '1px solid var(--border)' : undefined,
+                paddingLeft: !moveMode && isSupersetMember ? 12 : 0,
               }}>
                 {/* Exercise Header */}
                 <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  marginBottom: 8,
+                  minHeight: moveMode ? 56 : undefined,
+                  marginBottom: moveMode ? 0 : 8,
                 }}>
                   <div
                     className="exercise-name"
@@ -505,15 +559,29 @@ export default function ActiveWorkout() {
                       WebkitUserSelect: 'none',
                       touchAction: 'none',
                       cursor: 'grab',
+                      flex: 1,
+                      padding: moveMode ? '18px 0' : undefined,
+                      color: moveMode && moveSelectionIdx === exIdx ? 'var(--accent)' : undefined,
                     }}
                     onTouchStart={(e) => handleTouchStart(exIdx, e)}
                     onTouchMove={handleTouchMove}
                     onTouchEnd={() => handleTouchEnd(exIdx)}
                     onTouchCancel={handleTouchCancel}
+                    onClick={() => { if (moveMode) handleMoveRowClick(exIdx); }}
                   >
                     {getExName(ex.exerciseId)}
                   </div>
-                  {dragIdx === null && (
+                  {moveMode ? (
+                    <div style={{
+                      width: 44,
+                      textAlign: 'center',
+                      color: moveSelectionIdx === exIdx ? 'var(--accent)' : 'var(--text-muted)',
+                      fontSize: 20,
+                      lineHeight: 1,
+                    }}>
+                      {moveSelectionIdx === exIdx ? '●' : '☰'}
+                    </div>
+                  ) : dragIdx === null && (
                     <button
                       onClick={() => setMenuExerciseIdx(exIdx)}
                       style={{ padding: '4px 8px', color: 'var(--text-muted)', fontSize: 18 }}
@@ -523,6 +591,7 @@ export default function ActiveWorkout() {
                   )}
                 </div>
 
+                {!moveMode && <>
                     {/* Notes */}
                     {ex.notes?.filter(n => n.delivered).map((note, ni) => (
                       <div key={ni} style={{
@@ -644,12 +713,13 @@ export default function ActiveWorkout() {
                     >
                       + Add Set
                     </button>
+                </>}
               </div>
             </div>
           );
         })}
 
-        <button
+        {!moveMode && <button
           onClick={() => setShowExercisePicker(true)}
           className="btn"
           style={{
@@ -660,15 +730,15 @@ export default function ActiveWorkout() {
           }}
         >
           + Add Exercise
-        </button>
+        </button>}
 
-        <button
+        {!moveMode && <button
           onClick={() => setShowCancelConfirm(true)}
           className="btn btn-danger"
           style={{ width: '100%', marginTop: 8 }}
         >
           Cancel Workout
-        </button>
+        </button>}
       </div>
 
       {showExercisePicker && (
@@ -681,9 +751,9 @@ export default function ActiveWorkout() {
       {menuExerciseIdx !== null && (
         <ExerciseMenu
           exercise={workout.exercises[menuExerciseIdx]}
-          exerciseIdx={menuExerciseIdx}
           settings={settings}
           onClose={() => setMenuExerciseIdx(null)}
+          onMove={() => openMoveMode(menuExerciseIdx)}
           onUpdateExercise={(updates) => {
             updateExercise(menuExerciseIdx, ex => ({ ...ex, ...updates }));
             setMenuExerciseIdx(null);
