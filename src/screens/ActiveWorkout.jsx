@@ -10,6 +10,10 @@ import IncompleteWorkoutDialog from '../components/IncompleteWorkoutDialog.jsx';
 import ExerciseMenu from '../components/ExerciseMenu.jsx';
 import NumericInputModal from '../components/NumericInputModal.jsx';
 import ExerciseHistory from '../components/ExerciseHistory.jsx';
+import { findNearestItemIndex, moveItem } from '../utils/reorder.js';
+
+const AUTO_SCROLL_EDGE = 80;
+const AUTO_SCROLL_MAX_SPEED = 14;
 
 export default function ActiveWorkout() {
   const { activeWorkout, setActiveWorkout, finishWorkout, cancelWorkout, setWorkoutMinimized } = useContext(AppContext);
@@ -30,6 +34,10 @@ export default function ActiveWorkout() {
   const longPressTimer = useRef(null);
   const dragStartY = useRef(0);
   const isDragging = useRef(false);
+  const dragIdxRef = useRef(null);
+  const dragOverIdxRef = useRef(null);
+  const dragTouchY = useRef(null);
+  const autoScrollFrame = useRef(null);
 
   const settings = getSettings();
   const allExercises = getExercises();
@@ -253,6 +261,8 @@ export default function ActiveWorkout() {
     setDragActivating(exIdx);
     longPressTimer.current = setTimeout(() => {
       isDragging.current = true;
+      dragIdxRef.current = exIdx;
+      dragOverIdxRef.current = exIdx;
       setDragActivating(null);
       setDragIdx(exIdx);
       setDragOverIdx(exIdx);
@@ -261,6 +271,45 @@ export default function ActiveWorkout() {
       if (navigator.vibrate) navigator.vibrate(20);
     }, 400);
   }, []);
+
+  const updateDragTarget = useCallback((clientY) => {
+    const rects = dragRefs.current.map(el => el?.getBoundingClientRect() || null);
+    const nextIdx = findNearestItemIndex(rects, clientY);
+    if (nextIdx !== null && nextIdx !== dragOverIdxRef.current) {
+      dragOverIdxRef.current = nextIdx;
+      setDragOverIdx(nextIdx);
+    }
+  }, []);
+
+  const stopAutoScroll = useCallback(() => {
+    if (autoScrollFrame.current !== null) {
+      cancelAnimationFrame(autoScrollFrame.current);
+      autoScrollFrame.current = null;
+    }
+  }, []);
+
+  const runAutoScroll = useCallback(function scrollFrame() {
+    const y = dragTouchY.current;
+    if (!isDragging.current || y === null) {
+      autoScrollFrame.current = null;
+      return;
+    }
+
+    let speed = 0;
+    if (y < AUTO_SCROLL_EDGE) {
+      speed = -AUTO_SCROLL_MAX_SPEED * (1 - y / AUTO_SCROLL_EDGE);
+    } else if (y > window.innerHeight - AUTO_SCROLL_EDGE) {
+      speed = AUTO_SCROLL_MAX_SPEED * (1 - (window.innerHeight - y) / AUTO_SCROLL_EDGE);
+    }
+
+    if (speed !== 0) {
+      window.scrollBy(0, speed);
+      updateDragTarget(y);
+      autoScrollFrame.current = requestAnimationFrame(scrollFrame);
+    } else {
+      autoScrollFrame.current = null;
+    }
+  }, [updateDragTarget]);
 
   const handleTouchMove = useCallback((e) => {
     if (!isDragging.current) {
@@ -277,18 +326,14 @@ export default function ActiveWorkout() {
     e.preventDefault();
     const touch = e.touches[0];
     const y = touch.clientY;
-    for (let i = 0; i < dragRefs.current.length; i++) {
-      const el = dragRefs.current[i];
-      if (!el) continue;
-      const rect = el.getBoundingClientRect();
-      if (y >= rect.top && y <= rect.bottom) {
-        setDragOverIdx(i);
-        break;
-      }
+    dragTouchY.current = y;
+    updateDragTarget(y);
+    if (autoScrollFrame.current === null) {
+      autoScrollFrame.current = requestAnimationFrame(runAutoScroll);
     }
-  }, []);
+  }, [runAutoScroll, updateDragTarget]);
 
-  const handleTouchEnd = useCallback((exIdx) => {
+  const finishDrag = useCallback((exIdx, commit) => {
     const wasDragging = isDragging.current;
     const hadTimer = !!longPressTimer.current;
     if (longPressTimer.current) {
@@ -296,12 +341,12 @@ export default function ActiveWorkout() {
       longPressTimer.current = null;
     }
     setDragActivating(null);
-    if (wasDragging && dragIdx !== null && dragOverIdx !== null && dragIdx !== dragOverIdx) {
+    stopAutoScroll();
+    const fromIdx = dragIdxRef.current;
+    const toIdx = dragOverIdxRef.current;
+    if (commit && wasDragging && fromIdx !== null && toIdx !== null && fromIdx !== toIdx) {
       setActiveWorkout(prev => {
-        const exs = [...prev.exercises];
-        const [moved] = exs.splice(dragIdx, 1);
-        exs.splice(dragOverIdx, 0, moved);
-        return { ...prev, exercises: exs };
+        return { ...prev, exercises: moveItem(prev.exercises, fromIdx, toIdx) };
       });
     }
     if (!wasDragging && hadTimer && exIdx !== undefined) {
@@ -312,14 +357,31 @@ export default function ActiveWorkout() {
       }
     }
     isDragging.current = false;
+    dragIdxRef.current = null;
+    dragOverIdxRef.current = null;
+    dragTouchY.current = null;
     setDragIdx(null);
     setDragOverIdx(null);
-  }, [dragIdx, dragOverIdx, setActiveWorkout, workout, allExercises]);
+  }, [setActiveWorkout, workout, allExercises, stopAutoScroll]);
+
+  const handleTouchEnd = useCallback((exIdx) => {
+    finishDrag(exIdx, true);
+  }, [finishDrag]);
+
+  const handleTouchCancel = useCallback(() => {
+    finishDrag(undefined, false);
+  }, [finishDrag]);
+
+  useEffect(() => () => {
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    stopAutoScroll();
+  }, [stopAutoScroll]);
 
   if (!workout) return null;
 
   return (
     <div
+      className="active-workout"
       onClick={() => { if (numericTarget) { setNumericTarget(null); setNumpadOpen(false); } }}
       style={{
         paddingBottom: numpadOpen ? 300 : 24,
@@ -447,6 +509,7 @@ export default function ActiveWorkout() {
                     onTouchStart={(e) => handleTouchStart(exIdx, e)}
                     onTouchMove={handleTouchMove}
                     onTouchEnd={() => handleTouchEnd(exIdx)}
+                    onTouchCancel={handleTouchCancel}
                   >
                     {getExName(ex.exerciseId)}
                   </div>
@@ -460,16 +523,6 @@ export default function ActiveWorkout() {
                   )}
                 </div>
 
-                {dragIdx !== null ? (
-                  <div style={{
-                    fontSize: 12,
-                    color: 'var(--text-muted)',
-                    padding: '4px 0',
-                  }}>
-                    {ex.sets.length} set{ex.sets.length !== 1 ? 's' : ''}
-                  </div>
-                ) : (
-                  <>
                     {/* Notes */}
                     {ex.notes?.filter(n => n.delivered).map((note, ni) => (
                       <div key={ni} style={{
@@ -591,8 +644,6 @@ export default function ActiveWorkout() {
                     >
                       + Add Set
                     </button>
-                  </>
-                )}
               </div>
             </div>
           );

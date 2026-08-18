@@ -84,6 +84,13 @@ a {
   -webkit-overflow-scrolling: touch;
 }
 
+.active-workout,
+.active-workout * {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
 .section-header {
   font-size: 11px;
   font-weight: 600;

@@ -190,6 +190,8 @@ red delete action. Minimum 1 set per exercise is enforced.
 
 **Checkbox rule:** Only renders when `weight !== ''` OR `reps !== ''` OR `set.completed`. Otherwise the space is blank.
 
+**Exercise reordering:** Long-press an exercise name, then drag it to any position. Cards keep their full height while dragging, and the workout auto-scrolls near the top or bottom edge so off-screen positions remain reachable. Text selection and the iOS long-press callout are disabled throughout an active workout so they cannot intercept the drag gesture.
+
 ---
 
 ### Set Type Popover (within @ActiveWorkout)
