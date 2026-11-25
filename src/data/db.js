@@ -19,7 +19,11 @@ function read(key) {
 }
 
 function write(key, data) {
-  localStorage.setItem(key, JSON.stringify(data));
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (err) {
+    console.error(`Failed to save ${key}`, err);
+  }
 }
 
 // Exercises

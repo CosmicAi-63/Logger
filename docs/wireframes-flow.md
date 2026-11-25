@@ -190,9 +190,9 @@ red delete action. Minimum 1 set per exercise is enforced.
 
 **Checkbox rule:** Only renders when `weight !== ''` OR `reps !== ''` OR `set.completed`. Otherwise the space is blank.
 
-**Exercise reordering:** Long-press an exercise name to enter compact move mode, then drag it to any position. The workout auto-scrolls near the top or bottom edge when needed. Text selection and the iOS long-press callout are disabled throughout an active workout so they cannot intercept the drag gesture.
+**Exercise reordering:** Long-press an exercise name, then drag it in place to any position (layout does not collapse). Tapping an exercise name opens its full history. The workout auto-scrolls near the top or bottom edge when needed. Text selection and the iOS long-press callout are disabled throughout an active workout so they cannot intercept the drag gesture.
 
-Move mode shows a compact, name-only exercise list. Enter it by long-pressing an exercise name or choosing **Move Exercise** as the first item under the exercise menu's Actions section. Reorder by dragging a name or by tapping the destination for the selected exercise, then tap **Done**.
+Move mode shows a compact, name-only exercise list. Enter it by choosing **Move Exercise** as the first item under the exercise menu's Actions section. Reorder by dragging a name or by tapping the destination for the selected exercise, then tap **Done**.
 
 The sticky active-workout header always reserves the device's top safe area, including in move mode, so its title and actions never overlap the iPhone status indicators.
 
@@ -243,7 +243,7 @@ After checking set ✓:
 ```
 
 Timer auto-starts on normal/warmup/failure check.
-Does NOT start on drop sets or mid-superset sets.
+Does NOT start on drop sets, on a set followed by a drop set, or mid-superset. No timer row is shown between a set and its drop sets.
 
 ---
 

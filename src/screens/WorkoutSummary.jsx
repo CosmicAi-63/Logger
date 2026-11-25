@@ -21,6 +21,7 @@ export default function WorkoutSummary({ workout, onDone }) {
         const found = w.exercises.find(e => e.exerciseId === ex.exerciseId);
         if (!found) continue;
         for (const s of found.sets) {
+          if (s.completed === false) continue;
           if (Number(s.weight) > prevMaxWeight) prevMaxWeight = Number(s.weight);
           if (Number(s.reps) > prevMaxReps) prevMaxReps = Number(s.reps);
         }

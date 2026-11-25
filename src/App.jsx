@@ -11,7 +11,6 @@ import {
   getActiveWorkout,
   saveActiveWorkout,
   clearActiveWorkout,
-  getPreviousDataForExercise,
   getPreviousNotesForExercise,
 } from './data/db.js';
 import { supabase } from './data/supabase.js';
@@ -116,14 +115,12 @@ export default function App() {
     if (sharedTemplates && sharedTemplates.length > 0) {
       window.history.replaceState(null, '', window.location.pathname);
       const existing = getTemplates();
-      let importedCount = 0;
       for (const tmpl of sharedTemplates) {
         const alreadyExists = existing.some(
           t => t.name === tmpl.name && t.shared
         );
         if (!alreadyExists) {
           saveTemplate(tmpl);
-          importedCount++;
         }
       }
       setScreen('home');
@@ -155,7 +152,6 @@ export default function App() {
       startedAt: new Date().toISOString(),
       supersets: template.supersets || [],
       exercises: template.exercises.map(te => {
-        const prevData = getPreviousDataForExercise(te.exerciseId);
         const prevNotes = getPreviousNotesForExercise(te.exerciseId);
         return {
           exerciseId: te.exerciseId,
