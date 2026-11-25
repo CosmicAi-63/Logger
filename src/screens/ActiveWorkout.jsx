@@ -1,7 +1,6 @@
 import { useState, useContext, useCallback, useRef, useEffect } from 'react';
 import { AppContext } from '../App.jsx';
 import { getExercises, getPreviousDataForExercise, getSettings, saveActiveWorkout } from '../data/db.js';
-import { generateId } from '../utils/helpers.js';
 import ExercisePicker from '../components/ExercisePicker.jsx';
 import RestTimer from '../components/RestTimer.jsx';
 import UndoToast from '../components/UndoToast.jsx';
@@ -155,12 +154,12 @@ export default function ActiveWorkout() {
     if (nowComplete) {
       const prevData = getPreviousDataForExercise(ex.exerciseId);
       const prev = prevData?.[setIdx];
-      if (set.weight === '' && prev?.weight != null) updates.weight = prev.weight;
-      if (set.reps === '' && prev?.reps != null) updates.reps = prev.reps;
+      if (set.weight === '' && prev?.weight) updates.weight = prev.weight;
+      if (set.reps === '' && prev?.reps) updates.reps = prev.reps;
     }
     updateSet(exerciseIdx, setIdx, updates);
 
-    if (nowComplete && set.setType !== 'drop') {
+    if (nowComplete && set.setType !== 'drop' && ex.sets[setIdx + 1]?.setType !== 'drop') {
       const isSupersetMember = workout.supersets?.some(ss => ss.exerciseIds.includes(ex.exerciseId));
       if (isSupersetMember) {
         const superset = workout.supersets.find(ss => ss.exerciseIds.includes(ex.exerciseId));
@@ -266,17 +265,12 @@ export default function ActiveWorkout() {
       isDragging.current = true;
       dragIdxRef.current = exIdx;
       dragOverIdxRef.current = exIdx;
-      setMoveMode(true);
-      setMoveSelectionIdx(exIdx);
       setDragActivating(null);
       setDragIdx(exIdx);
       setDragOverIdx(exIdx);
       setNumericTarget(null);
       setNumpadOpen(false);
       if (navigator.vibrate) navigator.vibrate(20);
-      requestAnimationFrame(() => {
-        dragRefs.current[exIdx]?.scrollIntoView({ block: 'center' });
-      });
     }, 400);
   }, []);
 
@@ -356,9 +350,8 @@ export default function ActiveWorkout() {
       setActiveWorkout(prev => {
         return { ...prev, exercises: moveItem(prev.exercises, fromIdx, toIdx) };
       });
-      setMoveSelectionIdx(toIdx);
     }
-    if (!wasDragging && hadTimer && exIdx !== undefined) {
+    if (!wasDragging && hadTimer && exIdx !== undefined && !moveMode) {
       const ex = workout?.exercises[exIdx];
       if (ex) {
         const info = allExercises.find(e => e.id === ex.exerciseId);
@@ -374,7 +367,7 @@ export default function ActiveWorkout() {
     dragTouchY.current = null;
     setDragIdx(null);
     setDragOverIdx(null);
-  }, [setActiveWorkout, workout, allExercises, stopAutoScroll]);
+  }, [setActiveWorkout, workout, allExercises, stopAutoScroll, moveMode]);
 
   const handleTouchEnd = useCallback((exIdx) => {
     finishDrag(exIdx, true);
@@ -667,13 +660,13 @@ export default function ActiveWorkout() {
                                   setNumpadOpen(true);
                                 }}
                               />
-                              <RestTimer
+                              {!isDrop && ex.sets[setIdx + 1]?.setType !== 'drop' && <RestTimer
                                 key={`timer-${timerKey}`}
                                 duration={restDuration}
                                 active={timerActive}
                                 onDismiss={() => dismissTimer(timerKey)}
                                 onDurationChange={(d) => updateExercise(exIdx, ex => ({ ...ex, restTimerSeconds: d }))}
-                              />
+                              />}
                             </div>
                             {isLastDropInGroup && (
                               <button
@@ -891,7 +884,7 @@ export default function ActiveWorkout() {
   );
 }
 
-function SetRow({ set, setIdx, exIdx, displayNum, prev, setTypeColor, weightUnit, onUpdateSet, onToggleComplete, onDelete, numericTarget, onNumericOpen }) {
+function SetRow({ set, setIdx, exIdx, displayNum, prev, setTypeColor, onUpdateSet, onToggleComplete, onDelete, numericTarget, onNumericOpen }) {
   const [swiping, setSwiping] = useState(false);
   const [swipeX, setSwipeX] = useState(0);
   const startX = useRef(0);

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export default function NumericInputModal({ value, allowDecimal, placeholder, onConfirm, onClose }) {
+export default function NumericInputModal({ value, allowDecimal, onConfirm, onClose }) {
   const [display, setDisplay] = useState(String(value ?? ''));
   const [fresh, setFresh] = useState(true);
 

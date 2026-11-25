@@ -5,29 +5,35 @@ export default function RestTimer({ duration, active, onDismiss, onDurationChang
   const [remaining, setRemaining] = useState(duration);
   const [editing, setEditing] = useState(false);
   const intervalRef = useRef(null);
+  const onDismissRef = useRef(onDismiss);
+  useEffect(() => { onDismissRef.current = onDismiss; });
 
   useEffect(() => {
     if (!active) {
       clearInterval(intervalRef.current);
-      setRemaining(duration);
       return;
     }
-    setRemaining(duration);
-    intervalRef.current = setInterval(() => {
-      setRemaining(prev => {
-        if (prev <= 1) {
-          clearInterval(intervalRef.current);
-          if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-          onDismiss();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(intervalRef.current);
+    // Wall-clock based so the countdown stays correct if iOS throttles timers in the background
+    const endAt = Date.now() + duration * 1000;
+    const tick = () => {
+      const left = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+      setRemaining(left);
+      if (left <= 0) {
+        clearInterval(intervalRef.current);
+        if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+        onDismissRef.current();
+      }
+    };
+    tick();
+    intervalRef.current = setInterval(tick, 250);
+    document.addEventListener('visibilitychange', tick);
+    return () => {
+      clearInterval(intervalRef.current);
+      document.removeEventListener('visibilitychange', tick);
+    };
   }, [active, duration]);
 
-  const progress = active ? remaining / duration : 1;
+  const progress = active ? Math.min(1, remaining / duration) : 1;
   const radius = 15;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference * (1 - progress);
